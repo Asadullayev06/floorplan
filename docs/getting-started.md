@@ -1,5 +1,7 @@
 # Getting started
 
+Prefer to watch? The [walkthrough video](https://youtu.be/NTUUzC7L_NQ) covers installing Floorplan and touring a finished map.
+
 ## What you need
 
 - **Claude Code**: the Code tab in the Claude desktop app, or the Claude Code CLI in a terminal.

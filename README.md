@@ -17,20 +17,14 @@ Claude reads your codebase and draws an interactive map of it. Every part, file 
 [![Node 18+](https://img.shields.io/badge/node-%E2%89%A518-111?style=flat-square)](https://nodejs.org)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-111?style=flat-square)](#how-it-works)
 
-[Install](#install) · [Quick start](#quick-start) · [Features](#features) · [See it in action](#see-it-in-action) · [How it works](#how-it-works) · [Docs](docs/README.md) · [FAQ](#faq)
+[Watch the video](https://youtu.be/NTUUzC7L_NQ) · [Install](#install) · [Quick start](#quick-start) · [Features](#features) · [See it in action](#see-it-in-action) · [How it works](#how-it-works) · [Docs](docs/README.md) · [FAQ](#faq)
 
 </div>
 
-<!--
-  WALKTHROUGH VIDEO: on github.com, edit this README and drag your .mp4 (up to 10 MB on free plans,
-  100 MB on paid) into the editor. GitHub uploads it and inserts a https://github.com/user-attachments/...
-  link. Put that link on its own line here (replacing this comment) and it plays inline.
--->
-
 <p align="center">
-  <img src="docs/images/overview.png" alt="A Floorplan map of Brewline, a coffee subscription app: the online shop, staff app, main server and background jobs, connected to Stripe, Shippo, SendGrid, the database and team chat, with recent work highlighted in green" width="100%">
+  <a href="https://youtu.be/NTUUzC7L_NQ"><img src="docs/images/video.jpg" alt="Watch the walkthrough on YouTube: installing Floorplan, then a tour of the map of Brewline, a coffee subscription app" width="100%"></a>
 </p>
-<p align="center"><sub>Brewline, a demo coffee-subscription app built across four repos, mapped by Floorplan in one run.</sub></p>
+<p align="center"><sub>▶ <a href="https://youtu.be/NTUUzC7L_NQ">Watch the walkthrough</a>: installing Floorplan, then a tour of Brewline, a demo coffee-subscription app built across four repos.</sub></p>
 
 ## Why Floorplan?
 
