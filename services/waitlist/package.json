@@ -1,0 +1,9 @@
+{
+  "name": "floorplan-waitlist",
+  "private": true,
+  "description": "Opt-in Floorplan Cloud waitlist: adds sign-ups to a Google Sheet. Runs on Cloud Run.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.mjs" }
+}

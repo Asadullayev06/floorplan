@@ -24,11 +24,12 @@ skills/floorplan/
     lib/           extraction, import resolution, route matching, Health, screens, helpers
   assets/
     viewer.html    the map (template the build fills in)
-    ui/            viewer extensions: glossary, Health, recent work, screens, tour
+    ui/            viewer extensions: glossary, Health, recent work, screens, tour, waitlist card
     graph-query.js shared map lookups (viewer, query.mjs, Ask instructions)
     serve.mjs      copied into each project's floorplan/ folder
     query-cli.mjs  becomes floorplan/query.mjs
     logo.png, favicon.png
+services/waitlist/     the opt-in Floorplan Cloud waitlist (Cloud Run → Google Sheet)
 docs/                  these guides
 ```
 

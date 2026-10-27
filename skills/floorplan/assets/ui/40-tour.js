@@ -167,5 +167,5 @@
   SC.on('ready', maybeAuto);
   if (SC.state.layout) maybeAuto();
 
-  window.FloorplanTour = { start, end };
+  window.FloorplanTour = { start, end, active };
 })();

@@ -194,6 +194,7 @@ A `floorplan/` folder holding the map, plus a short section in `CLAUDE.local.md`
 - The scan, the map and its small local server all run on your computer. The server only accepts connections from your own machine.
 - Questions on the map go to your own Claude account, through the Claude Code CLI.
 - The Health check never stores or shows secret values, only where they are.
+- No analytics or tracking. The map may ask once whether you'd like an email when Floorplan Cloud launches. Nothing is sent unless you sign up, and then only your email and "just me" or "with my team".
 
 More in [Privacy and security](docs/privacy-and-security.md).
 
@@ -214,7 +215,7 @@ More in [Privacy and security](docs/privacy-and-security.md).
 <details>
 <summary><b>Does my code leave my computer?</b></summary>
 
-Only the way Claude Code always works: Claude reads the files it needs to describe your app, through your own account. The map itself is a local file and its server only listens on your machine. If you choose to open the map in the Claude app instead, Claude uploads the map (names, descriptions and structure, not your source code) to your private claude.ai account, and asks first.
+Only the way Claude Code always works: Claude reads the files it needs to describe your app, through your own account. The map itself is a local file and its server only listens on your machine. If you choose to open the map in the Claude app instead, Claude uploads the map (names, descriptions and structure, not your source code) to your private claude.ai account, and asks first. The one thing Floorplan itself ever sends is your email, and only if you sign up for the [Floorplan Cloud waitlist](docs/privacy-and-security.md#floorplan-cloud-waitlist).
 </details>
 
 <details>

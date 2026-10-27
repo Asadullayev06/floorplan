@@ -10,8 +10,9 @@
 | The map's server (`serve.mjs`) | your computer, listening on `127.0.0.1` only | nothing on its own |
 | Asking questions (Claude Code CLI) | a `claude -p` session on your computer, with your account | your question, and the files Claude chooses to read |
 | Asking questions (Claude app) | your claude.ai account | the map (names, descriptions, structure), never your source code. Claude asks before publishing it there |
+| Floorplan Cloud waitlist (only if you sign up) | the map's server, to Floorplan's waitlist service | the email you typed or chose, and "just me" or "with my team". See [below](#floorplan-cloud-waitlist) |
 
-Floorplan has no analytics or telemetry, and no servers of its own.
+Floorplan has no analytics or telemetry. Its only server is the opt-in waitlist below, and nothing reaches it unless you sign up.
 
 To keep the map fully offline, put `elk.bundled.js` (elkjs 0.9.x) in `skills/floorplan/assets/vendor/`. The build then inlines it into the map instead of loading it from a CDN.
 
@@ -21,6 +22,39 @@ To keep the map fully offline, put `elk.bundled.js` (elkjs 0.9.x) in `skills/flo
 - Every start creates a random token, which only the map page it serves receives. Asking questions and saving flows require that token, and those requests are refused when they come from another website.
 - Questions run Claude with **read-only** tools: reading files, searching, and the map's own lookup script. It can't edit files or run other commands.
 - It stops by itself two hours after the last tab closes, and `node floorplan/serve.mjs --stop` stops it immediately.
+
+## Floorplan Cloud waitlist
+
+Once a map has been open for two minutes, a card in its bottom-left corner asks whether you'd like an email when **Floorplan Cloud** launches. It's a hosted version with one shared map per team, kept in sync with GitHub. It asks once:
+- **Not now** asks again in two weeks.
+- **Don't ask again** and signing up both stop it for good, in every project.
+
+Nothing is sent unless you click **Notify me**.
+
+**What's sent:** only the email address in the box, and whether you'd use Floorplan Cloud just yourself or with a team. Nothing about you, your project or your code goes with it.
+
+**Use my Claude email:** this button fills the box with the email of the Claude account your Claude Code is signed in with. Claude Code is asked only at that moment, and you see the address before anything is sent. Nothing is read when you don't click it.
+
+**Where it goes:**
+- The map's local server sends it to a small service on Google Cloud Run. Its code is in [`services/waitlist/server.mjs`](../services/waitlist/server.mjs).
+- That service adds a row to a private Google Sheet that only Floorplan's maker, [Hayden Smith](https://github.com/haydenschmitty), can see. The row holds the date, the email and your answer.
+
+**What it's used for:** only to email you when Floorplan Cloud launches, and to gauge whether it's worth building. The list is never sold or shared. Every email on it will include a way to unsubscribe, and you can ask to be removed at any time by emailing [hismith142@gmail.com](mailto:hismith142@gmail.com).
+
+**Your IP address** is used briefly to rate-limit sign-ups and is never written to the sheet. Google Cloud keeps its standard request logs, which include IP addresses, for 30 days.
+
+**Turning it off:**
+- Click **Don't ask again**, or
+- set the environment variable `FLOORPLAN_NO_PROMPTS=1`.
+
+Your answer is kept in `~/.floorplan/settings.json`.
+
+**How the service is protected:** its address is in Floorplan's public code, so it's built to be harmless if abused.
+- It only accepts new sign-ups, and never returns anything from the list.
+- A repeat sign-up looks the same as a new one, so nobody can check whether an address is on the list.
+- Input is checked strictly and saved as plain text.
+- Sign-ups are limited per IP address and overall, and the list has a size cap.
+- It runs as a single small instance, so a flood of requests can't run up costs.
 
 ## Secrets
 
