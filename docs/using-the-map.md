@@ -31,6 +31,8 @@ The details on cards simplify as you zoom out: descriptions drop away and titles
 
   Double-click an outside card to jump there.
 
+<img src="images/inside.png" alt="Inside a part of the server: what uses it on the left, its files in the middle, outside services on the right">
+
 Hover over a card for a moment to see what kind of thing it is, where it lives, and how big it is. Hover over a line to see what it carries, for example which endpoints a screen calls.
 
 ## The side panel
@@ -70,6 +72,8 @@ Guided walkthroughs of the app's main jobs, like "Checkout" or "Sign up". A flow
 - **Highlight recent work:** turn the green highlights off for a clean map.
 
 ## Asking questions
+
+<img src="images/ask.png" alt="An answer board with numbered cards and a written walkthrough">
 
 Type into the Ask bar at the bottom and press **Enter**. Claude answers in a few sentences and shows an **answer board**: just the cards involved, how they connect, a short note on each, and a numbered walkthrough when the answer is a sequence. Follow-up suggestions appear under the answer. **Back to map** returns to where you were.
 

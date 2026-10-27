@@ -314,7 +314,7 @@ export function findIssues(src, f) {
 // ======================= build: turn findings into issues =======================
 
 const SEV_ORDER = { high: 0, medium: 1, low: 2 };
-const PUBLIC_PATH = /(^|\/)(health|healthz|healthcheck|ping|status|ready|readiness|live|liveness|version|metrics|robots\.txt|sitemap[\w.]*|favicon[\w.]*|\.well-known|login|logout|signin|pair|sign-in|signout|signup|sign-up|register|forgot[\w-]*|reset[\w-]*|verify[\w-]*|oauth\w*|callback|auth|token|refresh|static|assets|public|openapi\.json|docs|swagger[\w.]*|i|images?)(\/|$)/i;
+const PUBLIC_PATH = /(^|\/)(health|healthz|healthcheck|ping|status|ready|readiness|live|liveness|version|metrics|robots\.txt|sitemap[\w.]*|favicon[\w.]*|\.well-known|login|logout|signin|pair|sign-in|signout|signup|sign-up|register|forgot[\w-]*|reset[\w-]*|verify[\w-]*|oauth\w*|callback|auth|token|refresh|static|assets|public|newsletter|contact|waitlist|unsubscribe|openapi\.json|docs|swagger[\w.]*|i|images?)(\/|$)/i;
 const WEBHOOK_PATH = /webhook|\/hooks?\//i;
 // endpoints under a webhook URL that manage the webhooks (create, list, test…) rather than receive them
 const WEBHOOK_ADMIN = /\/(manage|admin|setup|settings|config|list|create|register|delete|test[\w-]*)(\/|$)/i;
@@ -459,6 +459,8 @@ export function buildHealth({ graph, scan, arch, root }) {
     if (x.k === 'global-guard' && !TEST_FILE.test(f.path) && !/(^|\/)(scripts?|tools|bin|examples?)\//.test(f.path) && !(fileByPath.has(f.path) && kinds(fileByPath.get(f.path).n).some((k) => NOT_USED_KINDS.has(k)))) { const k = f.repo ?? ''; if (!globalGuards.has(k)) globalGuards.set(k, []); globalGuards.get(k).push({ ...x, file: f.path }); }
     if (x.k === 'guard-def' && !TEST_FILE.test(f.path)) { if (!guardDefs.has(x.name)) guardDefs.set(x.name, []); guardDefs.get(x.name).push({ file: f.path, wrapper: !!x.wrapper }); }
   }
+  // a sign-in check applied where the route's router is mounted: app.use('/admin', requireStaff, adminRouter)
+  const mountGuard = new Map((scan.routes || []).filter((r) => r.mountMw?.some(isGuardName)).map((r) => [`${r.file}|${r.line}|${r.method}`, r.mountMw.find(isGuardName)]));
   const perRepo = new Map(); // repo -> { guarded, open: [], guardCounts }
   graph.routes.forEach((r, i) => {
     const fnd = routeFinding.get(`${r.f}|${r.l}|${r.m}`);
@@ -472,9 +474,10 @@ export function buildHealth({ graph, scan, arch, root }) {
     const global = (globalGuards.get(repo) || []).find((g) => g.framework === 'flask' || g.framework === 'express' || (g.framework === 'next' && fnd.fn === r.m));
     // an unrecognised decorator that turns out to be an auth wrapper defined elsewhere in the project
     const viaWrapper = !fnd.via && fnd.decos?.find((d) => guardDefs.get(d)?.some((g) => (g.file.split('/')[0] === r.f.split('/')[0])));
-    if (fnd.via || global || viaWrapper) {
+    const mounted = !fnd.via && mountGuard.get(`${r.f}|${r.l}|${r.m}`);
+    if (fnd.via || global || viaWrapper || mounted) {
       pr.guarded++; pr.guardedIn.set(r.f, (pr.guardedIn.get(r.f) || 0) + 1);
-      const name = fnd.guard || viaWrapper;
+      const name = fnd.guard || viaWrapper || mounted;
       if (name) {
         pr.guardCounts.set(name, (pr.guardCounts.get(name) || 0) + 1);
         if (!pr.fileGuards.has(r.f)) pr.fileGuards.set(r.f, new Map());

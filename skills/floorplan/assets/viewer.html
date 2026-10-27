@@ -76,7 +76,9 @@ header > * { pointer-events: auto; }
 #svg.panning { cursor: grabbing; }
 #viewport { transform-origin: 0 0; }
 #viewport.anim { transition: transform .5s var(--ease), opacity .35s var(--ease); }
-#context { position: absolute; left: 24px; top: 72px; max-width: min(520px, calc(100% - var(--pw) - 64px)); pointer-events: none; }
+#context { position: absolute; left: 24px; top: 72px; max-width: min(520px, calc(100% - var(--pw) - 64px)); pointer-events: none; transition: opacity .3s var(--ease); }
+/* the flow bar takes the heading's place while a flow plays */
+body.in-flow #context { opacity: 0; }
 #context .k { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-3); }
 #context .k .ico { width: 20px; height: 20px; border-radius: 7px; }
 #context::before { content: ""; position: absolute; inset: -28px -60px -28px -40px; background: radial-gradient(closest-side, rgba(15, 15, 15, .9), rgba(15, 15, 15, 0)); z-index: -1; }
@@ -1592,13 +1594,14 @@ $('#filters-btn').onclick = (ev) => { ev.stopPropagation(); fm.classList.remove(
 legendEl.addEventListener('click', (ev) => ev.stopPropagation());
 window.addEventListener('click', () => { fm.classList.remove('open'); legendEl.classList.remove('open'); });
 function startFlow(id) { const f = G.flows.find((x) => x.id === id); if (!f) return; state.flow = { f, i: 0 }; flowStep(); }
-function stopFlow() { state.flow = null; $('#flowbar').hidden = true; vp.querySelectorAll('.flowfx').forEach((x) => x.remove()); select(null); }
+function stopFlow() { state.flow = null; document.body.classList.remove('in-flow'); $('#flowbar').hidden = true; vp.querySelectorAll('.flowfx').forEach((x) => x.remove()); select(null); }
 function lcaContainer(a, b) {
   const cb = new Set(chain(b));
   for (const x of chain(a)) if (cb.has(x)) return (x === a || x === b) ? (parentOf.get(x) || 'root') : x;
   return 'root';
 }
 function flowStep() {
+  document.body.classList.add('in-flow'); // answer walkthroughs and the tour play flows too
   const { f, i } = state.flow;
   const a = f.steps[i].ref, b = f.steps[i + 1]?.ref;
   const container = b ? lcaContainer(a, b) : parentOf.get(a) || 'root';

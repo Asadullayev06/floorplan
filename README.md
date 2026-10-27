@@ -12,12 +12,12 @@
 Claude reads your codebase and draws an interactive map of it. Every part, file and web request gets a plain-English name, and every connection between them is shown.
 
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=flat-square)](https://code.claude.com/docs/en/overview)
-[![Version](https://img.shields.io/badge/version-0.1.0-111?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.1-111?style=flat-square)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-111?style=flat-square)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-%E2%89%A518-111?style=flat-square)](https://nodejs.org)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-111?style=flat-square)](#how-it-works)
 
-[Install](#install) · [Quick start](#quick-start) · [Features](#features) · [How it works](#how-it-works) · [Docs](docs/README.md) · [FAQ](#faq)
+[Install](#install) · [Quick start](#quick-start) · [Features](#features) · [See it in action](#see-it-in-action) · [How it works](#how-it-works) · [Docs](docs/README.md) · [FAQ](#faq)
 
 </div>
 
@@ -27,10 +27,10 @@ Claude reads your codebase and draws an interactive map of it. Every part, file 
   link. Put that link on its own line here (replacing this comment) and it plays inline.
 -->
 
-<!--
-  SCREENSHOT: save it as docs/images/overview.png, then replace this comment with:
-  <p align="center"><img src="docs/images/overview.png" alt="A Floorplan map of a web app" width="100%"></p>
--->
+<p align="center">
+  <img src="docs/images/overview.png" alt="A Floorplan map of Brewline, a coffee subscription app: the online shop, staff app, main server and background jobs, connected to Stripe, Shippo, SendGrid, the database and team chat, with recent work highlighted in green" width="100%">
+</p>
+<p align="center"><sub>Brewline, a demo coffee-subscription app built across four repos, mapped by Floorplan in one run.</sub></p>
 
 ## Why Floorplan?
 
@@ -104,6 +104,41 @@ Updates re-read only what changed, and an open map reloads itself. Everything ru
 </table>
 
 Plus guided **flows** you can request in plain words, a one-minute **Start here** tour, search, keyboard shortcuts, and right-click actions on every card.
+
+## See it in action
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/images/ask.png" alt="An answer board: the gift subscription traced from the gift page to the friend's inbox, with numbered cards and a written walkthrough">
+<p><b>Ask the map.</b> A real answer, from the Claude Code CLI in 31 seconds. It traced the gift from form to inbox across two repos, and spotted two bugs along the way.</p>
+</td>
+<td width="50%" valign="top">
+<img src="docs/images/screens.png" alt="Everything behind the Gift page: its form, the requests it makes, the server code, the database, Stripe and SendGrid">
+<p><b>Start from a screen.</b> Pick any page and see everything behind it, from the button down to the database and outside services.</p>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/images/recent.png" alt="The Recent work board for a gift subscriptions feature: what was asked, what was done, and a note on every changed card">
+<p><b>Recent work.</b> What you asked for, what changed, and why each change was needed, on one board.</p>
+</td>
+<td valign="top">
+<img src="docs/images/health.png" alt="The Health panel listing a secret key written into the code and an endpoint anyone can use, each with Show on map and Fix with Claude">
+<p><b>Health check.</b> A password left in the code and an endpoint anyone can call, each with a one-click fix prompt.</p>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/images/inside.png" alt="Inside the Business rules part of the server: its files in the middle, what uses them on the left, and outside services on the right">
+<p><b>Zoom in.</b> Inside any part: what's in it, what uses it, and what it relies on. Green tags mark what just changed.</p>
+</td>
+<td valign="top">
+<img src="docs/images/flow.png" alt="A guided flow, step 4 of 6, showing the main server emailing the gift code through SendGrid">
+<p><b>Guided flows.</b> Watch a request travel through the app step by step, or ask Claude to trace a new one.</p>
+</td>
+</tr>
+</table>
 
 ## Install
 

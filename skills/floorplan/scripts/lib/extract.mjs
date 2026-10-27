@@ -22,7 +22,7 @@ const all = (re, s) => [...s.matchAll(re)];
 
 // ---------- HTTP call literals ----------
 
-const HTTP_CONTEXT = /\b(fetch|axios|ky|got|request|requests|httpx|aiohttp|session|client|http|https|api|Api|API|endpoint|Endpoint|url|Url|URL|BASE|base)\b|\.(get|post|put|patch|delete|head)\s*(<[^>]*>)?\s*\(/;
+const HTTP_CONTEXT = /\b(fetch|axios|ky|got|request|requests|httpx|aiohttp|session|client|http|https|api|Api|API|endpoint|Endpoint|url|Url|URL|BASE|base)\b|\.(get|post|put|patch|delete|head)\s*(<[^>]*>)?\s*\(|(?<![.\w$])(get|post|put|patch|delete)\s*\(\s*[rf]?["'`]\//;
 const NAV_CONTEXT = /\b(router\.(push|replace|prefetch)|navigate|redirect|href|revalidatePath|pathname|Link|to=|location\.)\b|window\.location/;
 const STR_LITERAL = /(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g;
 const IGNORED_HOST = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$|\.(test|example|invalid|local|localhost|internal)(:\d+)?$|(^|\.)example\.(com|org|net)$/;
@@ -65,7 +65,8 @@ export function flattenTemplates(line) {
   return out;
 }
 
-const METHOD_CALL = /\.(get|post|put|patch|delete)\s*(?:<[^>]*>)?\s*\(/i;
+// `api.post(…)`, or a bare helper imported from an API client: `post("/orders", …)`
+const METHOD_CALL = /(?:\.|(?<![\w$])(?=(?:get|post|put|patch|delete)\s*\(\s*[rf]?["'`]\/))(get|post|put|patch|delete)\s*(?:<[^>]*>)?\s*\(/i;
 const METHOD_OPT = /method\s*[:=]\s*["'`](\w+)/i;
 // `const url = …`, `url = f"…"`, `this.endpoint = …`: a URL kept in a variable for the call below
 const ASSIGN = /(?:\b(?:const|let|var)\s+|^\s*(?:self\.|this\.)?)([A-Za-z_$][\w$]*)\s*(?::\s*[\w<>[\]|. ]+?\s*)?=(?![=>])/;
@@ -179,9 +180,10 @@ function extractJs(src, filePath) {
   }
   for (const m of all(/\b([A-Za-z_$][\w$]*)\.(use|route)\(\s*["'`](\/[^"'`]*)["'`]\s*,([^\n;]*)/g, code)) {
     const req = /require\(\s*["']([^"']+)["']\s*\)/.exec(m[4]);
-    if (req) { mounts.push({ prefix: m[3], spec: req[1], line: at(m.index) }); continue; }
+    const mw = (m[4].split(',').map((s) => s.trim()).filter((s) => /^[A-Za-z_$][w$.]*$/.test(s))).map((s) => s.split('.').pop());
+    if (req) { mounts.push({ prefix: m[3], spec: req[1], line: at(m.index), ...(mw.length ? { mw } : {}) }); continue; }
     const args = m[4].replace(/\)\s*$/, '').split(',').map((s) => s.trim()).filter((s) => /^[A-Za-z_$][\w$.]*$/.test(s));
-    if (args.length) mounts.push({ prefix: m[3], var: args[args.length - 1], line: at(m.index) });
+    if (args.length) mounts.push({ prefix: m[3], var: args[args.length - 1], line: at(m.index), ...(args.length > 1 ? { mw: args.slice(0, -1).map((s) => s.split('.').pop()) } : {}) });
   }
 
   // Next.js app/pages API routes, derived from the file path

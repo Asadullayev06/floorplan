@@ -46,7 +46,7 @@
     // a short walkthrough: the screen → its first request → the server code → where it ends up
     const firstOf = (kind) => items.find((b) => b.kind === kind);
     const steps = [firstOf('screen'), firstOf('request'), firstOf('server'), firstOf('data') || firstOf('outside')].filter(Boolean);
-    SC.showBoard({ title: s.name, question: 'Everything behind ' + s.url, items, steps: steps.length >= 3 ? steps : [] });
+    SC.showBoard({ kind: 'Screen', icon: 'ui', title: s.name, question: 'Everything behind ' + s.url, items, steps: steps.length >= 3 ? steps : [] });
   }
 
   // ---------- header menu ----------

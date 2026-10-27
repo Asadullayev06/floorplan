@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.1 (2026-10-27)
+
+- **More connections found:** requests made through small helpers imported from an API client, like `post("/orders", …)` in a Python job, are now matched to the endpoints they reach.
+- **Fewer false Health alarms:**
+  - Express routers protected where they're mounted (`app.use('/admin', requireStaff, adminRouter)`), including routers nested inside them, are no longer reported as open to anyone.
+  - Newsletter, contact and waitlist sign-ups are treated as public on purpose.
+- **Flows:** the page heading fades out while a flow plays, so the flow bar no longer overlaps it.
+- **Screens:** a screen's board is labelled "Screen" instead of "Answer".
+- **README:** screenshots, from a demo app mapped end to end.
+
 ## 0.1.0 (2026-10-27)
 
 First release.

@@ -41,7 +41,7 @@ export function resolveRoutes(files) {
     const t = mountTarget(f, mount);
     if (!t) continue;
     if (!mountsTo.has(t.file)) mountsTo.set(t.file, []);
-    mountsTo.get(t.file).push({ from: f.path, v: t.v, prefix: mount.prefix });
+    mountsTo.get(t.file).push({ from: f.path, v: t.v, prefix: mount.prefix, mw: mount.mw || [] });
   }
   // Every prefix a file's routes live under, composing nested mounts (a router mounted into a router
   // that is itself mounted), e.g. app.use('/api', api) + api.use('/users', users) → /api/users.
@@ -54,13 +54,25 @@ export function resolveRoutes(files) {
     return [...new Set(out)];
   };
 
+  // Middleware applied where a file's routers are mounted, all the way up: app.use('/admin', requireStaff, admin)
+  // then admin.use('/orders', orders) puts requireStaff in front of every route in orders.
+  const mountMw = (file, v, seen = new Set()) => {
+    const ms = (mountsTo.get(file) || []).filter((m) => v == null || m.v === '*' || m.v === v);
+    if (!ms.length || seen.has(file)) return [];
+    const next = new Set(seen).add(file);
+    // a route is only as protected as its least-protected mount
+    const each = ms.map((m) => [...m.mw, ...(m.from === file ? [] : mountMw(m.from, null, next))]);
+    return each.reduce((a, b) => a.filter((x) => b.includes(x)));
+  };
+
   const routes = [];
   for (const f of files) {
     // Test files define throwaway apps and stub servers; their routes aren't part of the system.
     if (!f.routes?.length || TEST_FILE.test(f.path)) continue;
     for (const r of f.routes) {
       const defPrefix = (r.var && f.routers?.[r.var]) || '';
-      for (const mp of outerPrefixes(f.path, r.var)) routes.push({ file: f.path, method: r.method, path: joinPath(mp, defPrefix, r.path), line: r.line, ...(r.handler ? { handler: r.handler } : {}), ...(r.doc ? { doc: r.doc } : {}) });
+      const mw = mountMw(f.path, r.var);
+      for (const mp of outerPrefixes(f.path, r.var)) routes.push({ file: f.path, method: r.method, path: joinPath(mp, defPrefix, r.path), line: r.line, ...(r.handler ? { handler: r.handler } : {}), ...(r.doc ? { doc: r.doc } : {}), ...(mw.length ? { mountMw: mw } : {}) });
     }
   }
   return dedupe(routes, (r) => `${r.file}|${r.method}|${r.path}`);
