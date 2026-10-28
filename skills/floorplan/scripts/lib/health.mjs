@@ -171,9 +171,11 @@ function findSecrets(src, f, out) {
 const GUARD_NAME = /(^|_)(login|auth|authenticated|authorized?|jwt|token|permission|permissions|perm|role|roles|staff|admin|superuser|owner|scope|scopes|session|api_?key|signature|signed|hmac|device|member|user)(_|$)|_required$|^requires?_|^ensure_|^verify_|^check_(auth|token|user|session|permission|role|api)|protect|^is_?authenticated|^is_?admin/i;
 const NOT_GUARD = /^(route|get|post|put|patch|delete|cached?|limit|limiter|rate_?limit\w*|cross_origin|wraps|staticmethod|classmethod|property|retry|timed|log\w*|swag_from|validate\w*|expects|marshal\w*|doc|json_required|fields?_required|params?_required|body_required|transaction\w*|csrf\w*|exempt)$/i;
 const isGuardName = (name) => !!name && !NOT_GUARD.test(name) && GUARD_NAME.test(snake(name));
-// FastAPI dependencies that hand over a database session rather than check the caller (SessionDep, get_db)
-const DB_DEPENDENCY = /^(get_|new_|create_)?(async_)?(db|database|session|db_session|sessionmaker)$|(^|_)(db|database)(_|$)/i;
-const isGuardDep = (name) => isGuardName(name) && !DB_DEPENDENCY.test(name);
+// FastAPI dependencies that hand over a database session rather than check the caller
+// (SessionDep, get_db, get_sql_session, SessionLocal, a unit of work), matched on the snake_case name
+const DB_DEPENDENCY = /^(get_|new_|create_)?(async_)?(db|database|session|db_session|sessionmaker)$|(^|_)(db|database|sql\w*|engine|conn|connection|cursor|uow|unit_of_work)(_|$)|session_?(local|maker|factory)/i;
+const isDbDep = (name) => DB_DEPENDENCY.test(snake(name));
+const isGuardDep = (name) => isGuardName(name) && !isDbDep(name);
 // A handler body that inspects the caller itself.
 const INLINE_CHECK = /request\.headers(?:\.get)?\(?\s*\[?\s*['"](authorization|x-api-key|x-[\w-]*(token|key|secret|signature)[\w-]*)['"]|req\.headers(?:\.|\[\s*['"])(authorization|x-api-key)|\b(verify|check|require|validate|authenticate|authorize)_?\w*(auth|token|session|user|key|signature|webhook|hmac|jwt|device|staff|admin|permission|role|request|caller)\w*\s*\(|\bcurrent_user\b|get_jwt_identity|verify_jwt_in_request|compare_digest|abort\(\s*40[13]\b|,\s*40[13]\s*\)?\s*$|status(?:Code)?\s*[:=(]\s*40[13]\b|\.status\(\s*40[13]\s*\)|req\.user\b|req\.session\.user|req\.auth\b|jwt\.verify|jwtVerify|getServerSession|auth\(\)|currentUser\(|getAuth\(|auth\.getUser|getSession\(|verifyIdToken|getToken\(/m;
 const SIGNATURE_CHECK = /hmac|signature|verify_?webhook|construct_?event|x-hub-signature|compare_digest|svix|webhooks?\.verify|jwt\.decode|oidc|id_token|authenticated|verify_\w*(token|request|push)/i;
@@ -324,6 +326,8 @@ function jsRoutes(src, f, out) {
  * An alias checks the caller when its dependency function does: by its name (admin_user), by taking a
  * checking dependency (Depends(require_login)), or by taking a checking alias itself, e.g.
  * `AdminOffice = Annotated[Office, Depends(admin_owned_office)]` where admin_owned_office takes `admin: AdminUser`.
+ * An alias whose own name reads as a check counts too (`AdminAccess = Annotated[dict, Depends(check)]`),
+ * unless either name says it's a database session (`SqlSessionDep` over `get_sql_session`).
  */
 function pyAliasGuards(files, findings) {
   const byRepo = new Map(); // repo -> { aliases: Map(name -> {fn, file}), fns: Map(name -> {deps, types}) }
@@ -338,9 +342,10 @@ function pyAliasGuards(files, findings) {
   const out = new Map();
   for (const [repo, { aliases, fns }] of byRepo) {
     const ok = new Map();
-    const checks = (fn) => isGuardDep(fn) || (!DB_DEPENDENCY.test(fn) && !!fns.get(fn) && (fns.get(fn).deps.some(isGuardDep) || fns.get(fn).types.some((t) => ok.has(t))));
+    const checks = (fn) => isGuardDep(fn) || (!isDbDep(fn) && !!fns.get(fn) && (fns.get(fn).deps.some(isGuardDep) || fns.get(fn).types.some((t) => ok.has(t))));
+    const aliasChecks = (name, fn) => checks(fn) || (isGuardDep(name) && !isDbDep(fn));
     // a few passes, so aliases built on other aliases resolve in any file order
-    for (let pass = 0; pass < 3; pass++) for (const [name, a] of aliases) if (!ok.has(name) && checks(a.fn)) ok.set(name, a.file);
+    for (let pass = 0; pass < 3; pass++) for (const [name, a] of aliases) if (!ok.has(name) && aliasChecks(name, a.fn)) ok.set(name, a.file);
     if (ok.size) out.set(repo, ok);
   }
   return out;
