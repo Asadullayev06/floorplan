@@ -31,7 +31,7 @@ Plain requests like "make me a floorplan" work without the slash command. If you
 Ask Claude to "update the floorplan". If a tab was already open, it reloads itself once the update finishes.
 
 ### The map is blank, or stuck on "Laying out"
-The map loads its layout engine from a CDN, so check your internet connection or any content blocker. For fully offline maps, see [Privacy and security](privacy-and-security.md#what-runs-where).
+Maps made before version 0.1.3 load their layout engine from the internet, so check your connection or any content blocker, or ask Claude to "update the floorplan". Newer maps have everything built in and work offline.
 
 ### A connection is missing
 Floorplan finds most web requests and imports by reading the code, but not all of them, for example requests to an address that only exists in settings. Ask Claude to add the missing connection to the floorplan; it records it in `architecture.json` and it stays on every update.

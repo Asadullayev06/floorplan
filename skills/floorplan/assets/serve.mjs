@@ -115,7 +115,8 @@ const readFlows = () => { try { return JSON.parse(fs.readFileSync(flowsFile, 'ut
 // ---------- Floorplan Cloud waitlist (opt-in) ----------
 // The map may ask, once, whether you want an email when Floorplan Cloud launches. Nothing is sent unless
 // you click "Notify me", and then only the email you see in the box and whether it's for you or a team.
-// Where it goes: a Google Sheet, through the script in docs/waitlist/Code.gs. Your answer (joined, later,
+// Where it goes: a small Cloud Run service that adds it to a Google Sheet (docs/privacy-and-security.md
+// links its code). Your answer (joined, later,
 // never) is kept in ~/.floorplan/settings.json so every project's map remembers it.
 // FLOORPLAN_NO_PROMPTS=1 turns the question off.
 const WAITLIST_URL = process.env.FLOORPLAN_WAITLIST_URL || 'https://floorplan-waitlist-690500262396.us-central1.run.app/';

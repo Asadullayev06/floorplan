@@ -192,6 +192,7 @@ A `floorplan/` folder holding the map, plus a short section in `CLAUDE.local.md`
 ## Privacy
 
 - The scan, the map and its small local server all run on your computer. The server only accepts connections from your own machine.
+- No dependencies or install scripts, and the map works offline: its layout engine and fonts are built in.
 - Questions on the map go to your own Claude account, through the Claude Code CLI.
 - The Health check never stores or shows secret values, only where they are.
 - No analytics or tracking. The map may ask once whether you'd like an email when Floorplan Cloud launches. Nothing is sent unless you sign up, and then only your email and "just me" or "with my team".

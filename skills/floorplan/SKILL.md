@@ -133,6 +133,6 @@ People can also use **Flows → Request a new flow** to have Claude trace someth
 
 - Paths are relative to the codebase root and use forward slashes. In a multi-repo root they start with the repo folder, e.g. `api-service/src/**`.
 - Route keys in descriptions are `"METHOD /full/path"` exactly as the worksheet prints them.
-- The viewer loads its layout engine (ELK) and fonts from CDNs. To make output work offline, put `elk.bundled.js` (elkjs 0.9.x) in `${CLAUDE_SKILL_DIR}/assets/vendor/` and the build will inline it.
+- The map makes no outside requests: the build inlines the layout engine (ELK) and fonts from `${CLAUDE_SKILL_DIR}/assets/vendor/`, so it works offline.
 - HTTP edges come from matching URL strings at call sites (including URLs kept in a variable first, nested template strings, and small same-file helpers that add a path prefix) to route definitions (Flask, FastAPI, Express, Next.js, Spring, Go and others), with blueprint/router prefixes resolved, nested mounts included. Treat them as strong hints. If an important service-to-service link is missing, add it as an explicit edge.
 - Don't hand-edit graph.json or index.html; they're regenerated on every build.

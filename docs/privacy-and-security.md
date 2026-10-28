@@ -6,15 +6,15 @@
 |---|---|---|
 | Scan, build, updates | your computer (Node.js) | nothing |
 | Writing names and descriptions | Claude, through your Claude Code session | the files Claude reads, the same as any Claude Code task |
-| The map | your browser | it loads its layout engine from [jsDelivr](https://www.jsdelivr.com/) and fonts from Google Fonts. No code or map data is sent |
+| The map | your browser | nothing. Its layout engine and fonts are bundled into the file, so it works offline |
 | The map's server (`serve.mjs`) | your computer, listening on `127.0.0.1` only | nothing on its own |
 | Asking questions (Claude Code CLI) | a `claude -p` session on your computer, with your account | your question, and the files Claude chooses to read |
 | Asking questions (Claude app) | your claude.ai account | the map (names, descriptions, structure), never your source code. Claude asks before publishing it there |
 | Floorplan Cloud waitlist (only if you sign up) | the map's server, to Floorplan's waitlist service | the email you typed or chose, and "just me" or "with my team". See [below](#floorplan-cloud-waitlist) |
 
-Floorplan has no analytics or telemetry. Its only server is the opt-in waitlist below, and nothing reaches it unless you sign up.
+Floorplan has no analytics or telemetry, no dependencies to install, and no install scripts. Its only outside connection is the opt-in waitlist below, and nothing reaches it unless you sign up. The map's few links to documentation open only when you click them.
 
-To keep the map fully offline, put `elk.bundled.js` (elkjs 0.9.x) in `skills/floorplan/assets/vendor/`. The build then inlines it into the map instead of loading it from a CDN.
+The layout engine ([elkjs](https://github.com/kieler/elkjs) 0.9.3, EPL-2.0) and fonts (Inter and JetBrains Mono, SIL Open Font License) are bundled in `skills/floorplan/assets/vendor/` with their licenses, and every build copies them into the map.
 
 ## The local server
 
@@ -36,7 +36,7 @@ Nothing is sent unless you click **Notify me**.
 **Use my Claude email:** this button fills the box with the email of the Claude account your Claude Code is signed in with. Claude Code is asked only at that moment, and you see the address before anything is sent. Nothing is read when you don't click it.
 
 **Where it goes:**
-- The map's local server sends it to a small service on Google Cloud Run. Its code is in [`services/waitlist/server.mjs`](../services/waitlist/server.mjs).
+- The map's local server sends it to a small service on Google Cloud Run. You can read its code [here](https://github.com/haydenschmitty/floorplan/blob/4cb4ff9337b2d021abbd52148e25a1e0016f099d/services/waitlist/server.mjs). It's kept in this repo's history rather than in the plugin, so it isn't downloaded when you install Floorplan.
 - That service adds a row to a private Google Sheet that only Floorplan's maker, [Hayden Smith](https://github.com/haydenschmitty), can see. The row holds the date, the email and your answer.
 
 **What it's used for:** only to email you when Floorplan Cloud launches, and to gauge whether it's worth building. The list is never sold or shared. Every email on it will include a way to unsubscribe, and you can ask to be removed at any time by emailing [hismith142@gmail.com](mailto:hismith142@gmail.com).

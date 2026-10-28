@@ -29,7 +29,7 @@ skills/floorplan/
     serve.mjs      copied into each project's floorplan/ folder
     query-cli.mjs  becomes floorplan/query.mjs
     logo.png, favicon.png
-services/waitlist/     the opt-in Floorplan Cloud waitlist (Cloud Run → Google Sheet)
+    vendor/        bundled layout engine (elkjs) and fonts, with their licenses
 docs/                  these guides
 ```
 
