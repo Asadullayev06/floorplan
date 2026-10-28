@@ -12,6 +12,6 @@
 - [ ] Anything the map shows people is in plain language
 - [ ] No secret values stored or printed
 - [ ] No details of a real private project in code, comments, docs or screenshots
-- [ ] `node --test "tests/**/*.test.mjs"` passes
+- [ ] `npm test` passes
 - [ ] `claude plugin validate .` passes
 - [ ] `CHANGELOG.md` updated, if people will notice the change

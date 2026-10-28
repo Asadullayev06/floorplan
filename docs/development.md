@@ -58,10 +58,24 @@ node skills/floorplan/scripts/open.mjs /path/to/project
 ## Tests
 
 ```bash
-node --test "tests/**/*.test.mjs"
+npm test
 ```
 
-Each test maps a small sample project from `tests/fixtures/` and checks the result, using Node's built-in test runner. When you fix a bug in what Floorplan detects, add a sample that shows it, and check the test fails without your fix.
+The tests use Node's built-in test runner, so there's nothing to install (`npm test` is the same as `node --test`). GitHub runs them on every push and pull request, on Linux, macOS and Windows with Node 18, 20 and 22.
+
+| File | What it checks |
+|---|---|
+| `parsing.test.mjs` | imports, endpoints, web requests and doc comments, per language and framework |
+| `helpers-lib.test.mjs` | globs, file types, command-line flags, fallback names |
+| `secrets.test.mjs` | Health finds secrets, masks them, and ignores placeholders |
+| `health.test.mjs` | which endpoints Health calls open to anyone (FastAPI sample in `fixtures/`) |
+| `sample-app.test.mjs` | a whole map of a two-repo shop: endpoints, cross-repo requests, Health, offline map, no secret values written, updates |
+| `serve.test.mjs` | the map's server: 127.0.0.1 only, token and same-origin checks, nothing served from outside its folder |
+| `release.test.mjs` | the version agrees across `plugin.json`, the README badge and the changelog |
+
+Sample projects are written to a temp folder by `helpers.mjs` (`shopApp()`) or copied from `tests/fixtures/`. Anything secret-looking is assembled at runtime, so no real-looking key is ever committed.
+
+When you fix a bug in what Floorplan detects, add a sample that shows it, and check the test fails without your fix.
 
 ## Extending the viewer
 
@@ -112,7 +126,7 @@ Files in `skills/floorplan/assets/ui/` are inlined into every map, in name order
 
 1. On an up-to-date `main`, run the tests and check the manifests, including the official plugin directory's requirements:
    ```bash
-   node --test "tests/**/*.test.mjs"
+   npm test
    claude plugin validate . --profile directory
    ```
 2. Bump `version` in `.claude-plugin/plugin.json` and the version badge in `README.md`.
