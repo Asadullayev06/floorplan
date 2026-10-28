@@ -435,12 +435,13 @@ const html = page(graph);
 fs.writeFileSync(path.join(outDir, 'index.html'), html);
 // --artifact: a copy to publish to the Claude app, without this machine's absolute path (editor links)
 if (args.artifact) fs.writeFileSync(path.join(outDir, 'artifact.html'), page({ ...graph, meta: { ...graph.meta, root: null } }));
-// Self-contained helpers next to the map: ask questions through the Claude Code CLI (serve.mjs)
+// Self-contained helpers next to the map: ask questions through a coding agent CLI (serve.mjs)
 // and the graph lookups it hands to Claude (query.mjs). They need only Node, not this skill.
 fs.writeFileSync(path.join(outDir, 'query.mjs'), `${graphQuery}
 // ---- cli ----
 ${fs.readFileSync(path.join(SKILL_DIR, 'assets', 'query-cli.mjs'), 'utf8')}`);
 fs.copyFileSync(path.join(SKILL_DIR, 'assets', 'serve.mjs'), path.join(outDir, 'serve.mjs'));
+fs.copyFileSync(path.join(SKILL_DIR, 'assets', 'providers.mjs'), path.join(outDir, 'providers.mjs'));
 // the logo and tab icon are inlined so the map stays one self-contained file
 function dataUri(name) { return 'data:image/png;base64,' + fs.readFileSync(path.join(SKILL_DIR, 'assets', name)).toString('base64'); }
 function escapeHtml(s) { return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
