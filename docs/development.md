@@ -61,7 +61,7 @@ node skills/floorplan/scripts/open.mjs /path/to/project
 npm test
 ```
 
-The tests use Node's built-in test runner, so there's nothing to install (`npm test` is the same as `node --test`). GitHub runs them on every push and pull request: on Linux and Windows with Node 18, 20 and 22, and on macOS with Node 22.
+The tests use Node's built-in test runner, so there's nothing to install (`npm test` is the same as `node --test`). GitHub runs them on every push and pull request on Linux and Windows with Node 18, 20 and 22, and on macOS weekly and on demand (Actions → macOS → Run workflow), since its macOS machines are often all busy.
 
 | File | What it checks |
 |---|---|

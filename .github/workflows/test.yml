@@ -1,6 +1,6 @@
-# Runs the test suite on every push and pull request. Linux and Windows cover every Node version
-# Floorplan supports; macOS runs once, on the current Node, since GitHub's macOS machines are scarce.
-# No dependencies to install: Node's built-in runner.
+# Runs the test suite on every push and pull request, on Linux and Windows with every Node version
+# Floorplan supports. macOS runs separately (macos.yml), since GitHub's macOS machines are often all
+# busy. No dependencies to install: Node's built-in runner.
 name: Tests
 
 on:
@@ -20,9 +20,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         node: [18, 20, 22]
-        include:
-          - os: macos-latest
-            node: 22
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
