@@ -99,6 +99,23 @@ export function providerRequest(provider, { question, mode, session, model, sche
   return { args: [...provider.prefix, ...args], input };
 }
 
+// Codex structured outputs require all object fields to be required, with closed objects.
+// Optional lists in Floorplan's original schema are represented as empty lists instead.
+export function strictOutputSchema(schema) {
+  const convert = node => {
+    if (!node || typeof node !== 'object' || Array.isArray(node)) return node;
+    const out = { ...node };
+    if (node.properties) {
+      out.properties = Object.fromEntries(Object.entries(node.properties).map(([k, v]) => [k, convert(v)]));
+      out.required = Object.keys(out.properties);
+      out.additionalProperties = false;
+    }
+    if (node.items) out.items = convert(node.items);
+    return out;
+  };
+  return JSON.stringify(convert(typeof schema === 'string' ? JSON.parse(schema) : schema));
+}
+
 export function parseProviderAnswer(value) {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value;
   const t = String(value ?? '');
