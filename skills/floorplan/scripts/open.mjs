@@ -35,7 +35,7 @@ function openBrowser(u) {
   const [cmd, a] = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', u]] : process.platform === 'darwin' ? ['open', [u]] : ['xdg-open', [u]];
   try { spawn(cmd, a, { stdio: 'ignore', detached: true, windowsHide: true }).unref(); return true; } catch { return false; }
 }
-const hash = crypto.createHash('sha1').update(fs.readFileSync(serveFile)).digest('hex').slice(0, 12);
+const hash = crypto.createHash('sha1').update(fs.readFileSync(serveFile)).update(fs.readFileSync(path.join(dir, 'providers.mjs'))).digest('hex').slice(0, 12);
 
 let s = readState();
 let status = s?.pid && alive(s.pid) ? await api(s, '/api/status') : null;
