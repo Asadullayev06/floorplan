@@ -12,7 +12,7 @@
 Claude reads your codebase and draws an interactive map of it. Every part, file and web request gets a plain-English name, and every connection between them is shown.
 
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=flat-square)](https://code.claude.com/docs/en/overview)
-[![Version](https://img.shields.io/badge/version-0.1.3-111?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.4-111?style=flat-square)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-111?style=flat-square)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-%E2%89%A518-111?style=flat-square)](https://nodejs.org)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-111?style=flat-square)](#how-it-works)
