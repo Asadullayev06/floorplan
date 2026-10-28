@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { providerRequest, handleProviderEvent, parseProviderAnswer, resolveProvider } from '../skills/floorplan/assets/providers.mjs';
+import { providerRequest, handleProviderEvent, parseProviderAnswer, resolveProvider, strictOutputSchema } from '../skills/floorplan/assets/providers.mjs';
 
 const mode = { instructions: 'Answer from the map only.', schema: JSON.stringify({ type: 'object', properties: { title: { type: 'string' } } }) };
 const provider = id => ({ id, label: id, cmd: id, prefix: [], shell: false });
@@ -56,4 +56,19 @@ test('JSON fenced answers are understood', () => {
 });
 test('Unknown providers fail closed', () => {
   assert.throws(() => resolveProvider('unknown'), /Unknown Floorplan provider/);
+});
+
+test('schema converter closes nested objects and requires optional lists', () => {
+  const result = JSON.parse(strictOutputSchema({
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      items: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' } } } },
+    },
+    required: ['title'],
+  }));
+  assert.deepEqual(result.required, ['title', 'items']);
+  assert.equal(result.additionalProperties, false);
+  assert.equal(result.properties.items.items.additionalProperties, false);
+  assert.deepEqual(result.properties.items.items.required, ['id']);
 });
