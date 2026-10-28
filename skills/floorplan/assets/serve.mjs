@@ -14,7 +14,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { resolveProvider, providerEnv, providerRequest, handleProviderEvent } from './providers.mjs';
+import { resolveProvider, providerEnv, providerRequest, handleProviderEvent, strictOutputSchema } from './providers.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -33,7 +33,7 @@ if (has('stop')) {
 }
 const wantPort = Number(opt('port', 4378));
 const idleExit = Number(opt('idle-exit', 0)) * 60000; // stop this long after the last tab closes (0 = never)
-const selfHash = crypto.createHash('sha1').update(fs.readFileSync(fileURLToPath(import.meta.url))).digest('hex').slice(0, 12);
+const selfHash = crypto.createHash('sha1').update(fs.readFileSync(fileURLToPath(import.meta.url))).update(fs.readFileSync(path.join(here, 'providers.mjs'))).digest('hex').slice(0, 12);
 const model = opt('model', process.env.FLOORPLAN_MODEL || '');
 const token = crypto.randomBytes(16).toString('hex');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -77,7 +77,7 @@ function load() {
   fs.mkdirSync(cache, { recursive: true });
   for (const [name, mode] of Object.entries(MODES)) {
     mode.schemaFile = path.join(cache, name + '-schema.json');
-    fs.writeFileSync(mode.schemaFile, mode.schema);
+    fs.writeFileSync(mode.schemaFile, strictOutputSchema(mode.schema));
   }
 }
 load();
