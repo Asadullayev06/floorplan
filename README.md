@@ -135,6 +135,32 @@ Plus guided **flows** you can request in plain words, a one-minute **Start here*
 </tr>
 </table>
 
+## Codex and Antigravity (community fork)
+
+This fork adds portable agent skills for OpenAI Codex and Google Antigravity while keeping the original Claude Code plugin. Requires Node.js 18+ and a logged-in coding agent CLI.
+
+From a clone of this repository, install globally on your own machine:
+
+```bash
+node scripts/install-agents.mjs --agent both --scope user
+```
+
+The installer copies the complete Floorplan skill (scripts, references, and assets) into your Codex and Antigravity IDE user skill directories. To target Antigravity CLI instead of IDE, add `--antigravity-surface cli`. To install into the current project, use `--scope project`; both agents read `.agents/skills/floorplan`.
+
+Restart your agent, open the application project and ask: **Make me a floorplan of this project.** For updates, ask: **Update the floorplan.**
+
+The viewer's interactive Ask server now accepts an explicit coding agent:
+
+```bash
+node floorplan/serve.mjs --provider codex
+node floorplan/serve.mjs --provider antigravity
+node floorplan/serve.mjs --provider claude
+```
+
+Use `--provider auto` to select the first detected CLI (Claude Code, then Codex, then Antigravity). You can override executable detection with `--codex`, `--antigravity`, or `--claude` followed by an executable path. Codex is executed with read-only sandbox restrictions. Antigravity is launched with its sandbox flag and default permission review; verify your local permission settings before trusting it with sensitive repositories. The map viewer runs locally, but Ask questions are processed through your own coding agent.
+
+No paid GitHub Actions are needed for installation or normal usage. Tests are available locally with `node --test`.
+
 ## Install
 
 You need [Claude Code](https://code.claude.com/docs/en/overview) (the desktop app's Code tab or the CLI) and [Node.js 18+](https://nodejs.org).
