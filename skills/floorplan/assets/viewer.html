@@ -1504,9 +1504,9 @@ function renderFlowMenu() {
   fm.querySelector('[data-new]').onclick = showFlowForm;
 }
 function showFlowForm() {
-  fm.innerHTML = `<form class="ff"><label>Describe what to trace, and Claude builds a step-by-step flow through the map.</label>
+  fm.innerHTML = `<form class="ff"><label>Describe what to trace, and the selected agent builds a step-by-step flow through the map.</label>
     <textarea placeholder="e.g. How does an order end up charged through Stripe?" spellcheck="false"></textarea>
-    ${askState.engine ? '' : '<div class="note">Needs the Claude Code CLI (run node floorplan/serve.mjs) or the Claude app.</div>'}
+    ${askState.engine ? '' : '<div class="note">Needs a supported coding agent CLI (run node floorplan/serve.mjs) or the Claude app.</div>'}
     <div class="ffa"><button type="button" class="btn" data-cancel>Cancel</button><button type="submit" class="btn primary" ${askState.engine ? '' : 'disabled'}>Build flow</button></div></form>`;
   const form = fm.querySelector('form'), ta = form.querySelector('textarea');
   setTimeout(() => ta.focus(), 30);
@@ -1581,7 +1581,7 @@ async function requestFlow(prompt) {
   try {
     const raw = askState.engine === 'cli' ? await askViaCli(prompt, progress, 'flow') : await askViaApp(prompt, progress, 'flow');
     const steps = (raw.steps || []).map((s) => ({ ref: String(s.id || ''), note: String(s.note || '') })).filter((s) => Q.exists(s.ref));
-    if (steps.length < 2) throw { code: 'flow_empty', message: "Claude couldn't find enough connected steps for that. Try naming where it starts or ends." };
+    if (steps.length < 2) throw { code: 'flow_empty', message: "The agent couldn't find enough connected steps for that. Try naming where it starts or ends." };
     const fl = { id: 'custom-' + Date.now().toString(36), title: String(raw.title || prompt).slice(0, 80), description: String(raw.description || ''), steps, custom: true };
     G.flows.push(fl);
     await saveCustomFlow(fl);
@@ -1651,9 +1651,9 @@ const askState = { engine: null, sample: null, busy: false, ctl: null, session: 
 const askInput = $('#ask-input'), askSend = $('#ask-send'), sheet = $('#ask-sheet'), warn = $('#ask-warn');
 const DOCS = 'https://docs.claude.com/en/docs/claude-code/overview';
 const WARNINGS = {
-  no_engine: `Asking needs the <b>Claude Code CLI</b>. From the codebase root run <code>node floorplan/serve.mjs</code>, or open this map in the Claude app.`,
+  no_engine: `Asking needs a supported coding agent CLI. From the codebase root run <code>node floorplan/serve.mjs --provider codex</code> (or claude/antigravity), or open this map in the Claude app.`,
   cli_missing: `Requires the <b>Claude Code CLI</b> installed to work. <a href="${DOCS}" target="_blank" rel="noopener">Install it</a>, then restart <code>serve.mjs</code>.`,
-  not_logged_in: `The Claude Code CLI isn't signed in. Run <code>claude</code> in a terminal once to sign in, then ask again.`,
+  not_logged_in: `The coding agent CLI isn't signed in. Open its interactive terminal and authenticate, then retry.`,
   app_unavailable: `Claude isn't available for this map in this view.`,
   not_granted: `Claude access was declined for this map. Reload the page to be asked again.`,
   cli_tip: `Install the <b>Claude Code CLI</b> for a better experience: it can read your source code, not just this map. <a href="${DOCS}" target="_blank" rel="noopener">Install it</a>, then run <code>node floorplan/serve.mjs</code> in the codebase.`,
@@ -1672,7 +1672,7 @@ function setEngine(engine, label, warning) {
   tag.className = 'engine ' + (engine ? 'ok' : 'warn');
   tag.innerHTML = `<i></i>${h(engine ? label : 'Unavailable')}${engine === 'app' ? `<button type="button" class="einfo" title="Install the Claude Code CLI for a better experience" aria-label="About the Claude Code CLI"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>` : ''}`;
   tag.querySelector('.einfo')?.addEventListener('click', () => setWarning(warn.hidden || !warn.classList.contains('info') ? 'cli_tip' : null));
-  tag.title = engine === 'cli' ? 'Answers come from your local Claude Code CLI, which can read the source' : engine === 'app' ? 'Answers come from Claude in the Claude app, using the map (not the source files)' : '';
+  tag.title = engine === 'cli' ? 'Answers come from your selected local coding agent, which can read the source' : engine === 'app' ? 'Answers come from Claude in the Claude app, using the map (not the source files)' : '';
   askInput.disabled = !engine;
   askSend.disabled = !engine;
   askInput.placeholder = engine ? `Ask anything about ${G.project.name}…` : 'Asking is unavailable';
@@ -1681,7 +1681,7 @@ function setEngine(engine, label, warning) {
 }
 async function detectEngine() {
   const S = window.FLOORPLAN_SERVER;
-  if (S) { S.cli ? setEngine('cli', 'Claude Code' + (S.model ? ' · ' + S.model : '')) : setEngine(null, null, 'cli_missing'); return; }
+  if (S) { S.cli ? setEngine('cli', (S.providerLabel || 'Coding agent') + (S.model ? ' · ' + S.model : '')) : setEngine(null, null, 'cli_missing'); return; }
   if (window.claude?.use) {
     setEngine(null, null); $('#ask-engine').innerHTML = '<i></i>connecting…';
     let sample = null;
@@ -1759,7 +1759,7 @@ function showFailure(question, code, message, partial) {
   if (code === 'not_logged_in' || code === 'not_granted') setWarning(code);
   if (code === 'not_granted' || code === 'sampling_disabled') setEngine(null, null, code === 'not_granted' ? 'not_granted' : 'app_unavailable');
   if (code === 'cancelled') { sheet.hidden = true; return; }
-  const copy = { rate_limited: 'Claude is busy or you have hit a usage limit. Try again in a bit.', not_logged_in: 'The Claude Code CLI needs you to sign in first.', cli_missing: 'Claude Code CLI not found.', invalid_json: "Claude's answer couldn't be read as a map view. Try rephrasing.", session_expired: 'Your Claude session expired. Sign in again.' }[code];
+  const copy = { rate_limited: 'The coding agent is busy or you have hit a usage limit. Try again later.', not_logged_in: 'The selected CLI needs you to sign in first.', cli_missing: 'No supported coding agent CLI found.', invalid_json: "The coding agent's answer couldn't be read as a map view. Try rephrasing.", session_expired: 'The agent session expired. Sign in again.' }[code];
   sheetShell(question, `<p class="err">${h(copy || message || 'Something went wrong.')}</p>${partial ? md(partial) : ''}${code === 'cli_error' && message ? `<p style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${h(message.slice(0, 400))}</p>` : ''}`);
 }
 function setBusy(b) {

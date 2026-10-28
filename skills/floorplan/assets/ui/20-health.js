@@ -1,6 +1,6 @@
 // Health check panel: plain-language warnings from graph.health (lib/health.mjs) — leaked keys,
 // endpoints anyone can call, unused and oversized files — each with "Show on map" and a ready
-// prompt to paste into Claude Code. Talks to the viewer only through window.Floorplan.
+// prompt to paste into your coding agent. Talks to the viewer only through window.Floorplan.
 (() => {
   const SC = window.Floorplan;
   if (!SC) return;
@@ -47,15 +47,15 @@
   function closeList() { isOpen = false; SC.closePanel(); }
   function showOnMap(issue) {
     const items = (issue.items || []).filter((id) => SC.exists(id)).map((id) => ({ id, note: (issue.notes && issue.notes[id]) || '' }));
-    if (!items.length) { SC.toast('This one isn’t on the map. Use “Fix with Claude” instead.'); return; }
+    if (!items.length) { SC.toast('This one isn’t on the map. Use “Fix with agent” instead.'); return; }
     if (isOpen) closeList();
     SC.showBoard({ title: issue.title, question: issue.detail, items });
   }
-  function fixWithClaude(issue) {
+  function fixWithAgent(issue) {
     SC.modal({
-      title: 'Fix with Claude',
-      html: `<p class="hc-hint">Copy this request and paste it into <b>Claude Code</b>, opened in your project folder. It explains what to change and asks before anything risky.</p><pre>${h(issue.fix)}</pre>`,
-      actions: [{ label: 'Copy prompt', primary: true, icon: 'copy', onClick: () => { SC.copy(issue.fix); SC.toast('Copied. Paste it into Claude Code.'); } }],
+      title: 'Fix with agent',
+      html: `<p class="hc-hint">Copy this request and paste it into <b>your coding agent</b>, opened in your project folder. It explains what to change and asks before anything risky.</p><pre>${h(issue.fix)}</pre>`,
+      actions: [{ label: 'Copy prompt', primary: true, icon: 'copy', onClick: () => { SC.copy(issue.fix); SC.toast('Copied. Paste it into your coding agent.'); } }],
     });
   }
   const onMap = (issue) => (issue.items || []).some((id) => SC.exists(id));
@@ -73,12 +73,12 @@
       ${locText(issue)}
       <div class="hc-a">
         ${onMap(issue) ? `<button class="btn soft" data-hc-show="${idx}">${SC.iconI('search')}Show on map</button>` : ''}
-        <button class="btn soft" data-hc-fix="${idx}">${SC.iconI('spark')}Fix with Claude</button>
+        <button class="btn soft" data-hc-fix="${idx}">${SC.iconI('spark')}Fix with agent</button>
       </div>
     </div>`;
   const bindIssues = (el) => {
     el.querySelectorAll('[data-hc-show]').forEach((b) => b.addEventListener('click', (ev) => { ev.stopPropagation(); showOnMap(issues[+b.dataset.hcShow]); }));
-    el.querySelectorAll('[data-hc-fix]').forEach((b) => b.addEventListener('click', (ev) => { ev.stopPropagation(); fixWithClaude(issues[+b.dataset.hcFix]); }));
+    el.querySelectorAll('[data-hc-fix]').forEach((b) => b.addEventListener('click', (ev) => { ev.stopPropagation(); fixWithAgent(issues[+b.dataset.hcFix]); }));
   };
   const headline = () => urgent ? `${SC.plural(urgent, 'thing')} need${urgent === 1 ? 's' : ''} attention` : issues.length ? 'Nothing urgent' : 'No problems found';
   const breakdown = () => `<div class="hc-sub">${ORDER.filter(count).map((s) => `<span><i class="dot" style="background:${SEV[s].color}"></i>${count(s)} ${SEV[s].word}</span>`).join('')}</div>`;
@@ -95,7 +95,7 @@
       const list = issues.map((i, idx) => [i, idx]).filter(([i]) => i.severity === sev);
       return list.length ? `<div class="sec"><h3>${h(SEV[sev].group)} <span class="c">${list.length}</span></h3>${list.map(([i, idx]) => issueHtml(i, idx)).join('')}</div>` : '';
     }).join('');
-    const foot = issues.length ? `<div class="sec" style="color:var(--text-3);font-size:12px;line-height:1.6">These are automatic hints. “Fix with Claude” gives you a request to paste into Claude Code; it checks the code before changing anything.</div>` : '';
+    const foot = issues.length ? `<div class="sec" style="color:var(--text-3);font-size:12px;line-height:1.6">These are automatic hints. “Fix with agent” gives you a request to paste into your coding agent; it checks the code before changing anything.</div>` : '';
     return top + groups + foot;
   }
   function openList() {

@@ -35,7 +35,7 @@ function openBrowser(u) {
   const [cmd, a] = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', u]] : process.platform === 'darwin' ? ['open', [u]] : ['xdg-open', [u]];
   try { spawn(cmd, a, { stdio: 'ignore', detached: true, windowsHide: true }).unref(); return true; } catch { return false; }
 }
-const hash = crypto.createHash('sha1').update(fs.readFileSync(serveFile)).digest('hex').slice(0, 12);
+const hash = crypto.createHash('sha1').update(fs.readFileSync(serveFile)).update(fs.readFileSync(path.join(dir, 'providers.mjs'))).digest('hex').slice(0, 12);
 
 let s = readState();
 let status = s?.pid && alive(s.pid) ? await api(s, '/api/status') : null;
@@ -51,7 +51,7 @@ if (status && status.hash !== hash) {
 }
 
 if (!status) {
-  const pass = ['port', 'model', 'claude'].flatMap((k) => (args[k] ? ['--' + k, String(args[k])] : []));
+  const pass = ['port', 'model', 'provider', 'claude', 'codex', 'antigravity'].flatMap((k) => (args[k] ? ['--' + k, String(args[k])] : []));
   if (!args.port && s?.port) pass.push('--port', String(s.port)); // keep the address people have open
   fs.mkdirSync(path.dirname(stateFile), { recursive: true });
   const log = fs.openSync(path.join(dir, '.cache', 'server.log'), 'w');
@@ -59,7 +59,7 @@ if (!status) {
   spawn(process.execPath, [serveFile, '--no-open', '--idle-exit', String(IDLE_MINUTES), ...pass], {
     cwd: root, detached: true, stdio: ['ignore', log, log], windowsHide: true,
   }).unref();
-  // finding the Claude CLI takes a few seconds before the server listens
+  // finding the selected coding agent CLI takes a few seconds before the server listens
   for (let i = 0; i < 100; i++) {
     await sleep(200);
     const n = readState();
@@ -81,6 +81,6 @@ else shown = openBrowser(s.url) ? 'opened in the browser' : 'could not open a br
 
 console.log(`FLOORPLAN  ${s.url}  (${shown})`);
 console.log(health?.cli
-  ? `ASK  works: questions run through the Claude Code CLI${health.version ? ' ' + health.version : ''}`
-  : 'ASK  needs the Claude Code CLI, which was not found; the map itself works (https://docs.claude.com/en/docs/claude-code)');
+  ? `ASK  works: questions run through ${health.providerLabel || 'the selected coding agent'} CLI${health.version ? ' ' + health.version : ''}`
+  : 'ASK  needs Claude Code, Codex or Antigravity CLI, which was not found; the map itself still works.');
 console.log(`SERVER  runs in the background, updates open tabs when the map is rebuilt, and stops ${IDLE_MINUTES / 60} hours after the last tab closes. Stop it now: node ${rel}/serve.mjs --stop`);
