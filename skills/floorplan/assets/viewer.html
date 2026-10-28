@@ -389,6 +389,13 @@ body.no-panel #panel-resize { opacity: 0; pointer-events: none; }
 .group-h:first-of-type { margin-top: 2px; }
 .group-h .gd { color: var(--text-4); font-weight: 400; font-size: 12px; }
 #legend .tech { border-top: 1px solid var(--hair); margin-top: 4px; padding-top: 4px; }
+/* Safari/WebKit: HTML inside <foreignObject> that gets its own render layer (position, overflow clip,
+   transform, opacity, animation) is painted at the page origin, ignoring the SVG transform. Keep cards layer-free there. */
+html.wk .node foreignObject { overflow: hidden; }
+html.wk .card, html.wk .card * { position: static !important; transform: none !important; animation: none !important; transition: none !important; will-change: auto !important; }
+html.wk .card { overflow: visible; }
+html.wk svg.dim .node:not(.hl) .card > * { opacity: 1; }
+html.wk svg.dim .node:not(.hl) foreignObject { opacity: .28; }
 </style>
 </head>
 <body>
@@ -442,6 +449,7 @@ body.no-panel #panel-resize { opacity: 0; pointer-events: none; }
   <div class="hint"><span><span class="kbd">↑↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">esc</span> close</span></div>
 </div></div>
 <!--__ELK_SCRIPT__-->
+<script>if (/AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|OPR/.test(navigator.userAgent)) document.documentElement.classList.add('wk');</script>
 <script>window.FLOORPLAN = /*__FLOORPLAN_DATA__*/null;</script>
 <script>/*__GRAPH_QUERY__*/</script>
 <script>
