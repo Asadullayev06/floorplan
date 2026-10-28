@@ -37,8 +37,9 @@ function openEndpoints(graph) {
 
 test('FastAPI: Annotated dependency aliases count as sign-in checks (#4)', () => {
   const graph = buildFixture('fastapi-annotated');
-  assert.ok(graph.routes.length >= 5, `expected the sample's 5 endpoints, found ${graph.routes.length}`);
-  // imported alias (AdminUser), same-file alias (MemberUser) and an alias whose dependency takes
-  // AdminUser (OwnedOffice) are all protected; a route with only a database session (SessionDep) isn't
-  assert.deepEqual(openEndpoints(graph), ['POST /feedback']);
+  assert.ok(graph.routes.length >= 7, `expected the sample's 7 endpoints, found ${graph.routes.length}`);
+  // imported alias (AdminUser), same-file alias (MemberUser), an alias whose dependency takes
+  // AdminUser (OwnedOffice) and an alias whose own name reads as a check (AdminAccess) are all protected;
+  // routes with only a database session (SessionDep, SqlSessionDep over get_sql_session) aren't
+  assert.deepEqual(openEndpoints(graph), ['POST /comments', 'POST /feedback']);
 });
