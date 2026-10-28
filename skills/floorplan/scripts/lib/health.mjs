@@ -171,6 +171,9 @@ function findSecrets(src, f, out) {
 const GUARD_NAME = /(^|_)(login|auth|authenticated|authorized?|jwt|token|permission|permissions|perm|role|roles|staff|admin|superuser|owner|scope|scopes|session|api_?key|signature|signed|hmac|device|member|user)(_|$)|_required$|^requires?_|^ensure_|^verify_|^check_(auth|token|user|session|permission|role|api)|protect|^is_?authenticated|^is_?admin/i;
 const NOT_GUARD = /^(route|get|post|put|patch|delete|cached?|limit|limiter|rate_?limit\w*|cross_origin|wraps|staticmethod|classmethod|property|retry|timed|log\w*|swag_from|validate\w*|expects|marshal\w*|doc|json_required|fields?_required|params?_required|body_required|transaction\w*|csrf\w*|exempt)$/i;
 const isGuardName = (name) => !!name && !NOT_GUARD.test(name) && GUARD_NAME.test(snake(name));
+// FastAPI dependencies that hand over a database session rather than check the caller (SessionDep, get_db)
+const DB_DEPENDENCY = /^(get_|new_|create_)?(async_)?(db|database|session|db_session|sessionmaker)$|(^|_)(db|database)(_|$)/i;
+const isGuardDep = (name) => isGuardName(name) && !DB_DEPENDENCY.test(name);
 // A handler body that inspects the caller itself.
 const INLINE_CHECK = /request\.headers(?:\.get)?\(?\s*\[?\s*['"](authorization|x-api-key|x-[\w-]*(token|key|secret|signature)[\w-]*)['"]|req\.headers(?:\.|\[\s*['"])(authorization|x-api-key)|\b(verify|check|require|validate|authenticate|authorize)_?\w*(auth|token|session|user|key|signature|webhook|hmac|jwt|device|staff|admin|permission|role|request|caller)\w*\s*\(|\bcurrent_user\b|get_jwt_identity|verify_jwt_in_request|compare_digest|abort\(\s*40[13]\b|,\s*40[13]\s*\)?\s*$|status(?:Code)?\s*[:=(]\s*40[13]\b|\.status\(\s*40[13]\s*\)|req\.user\b|req\.session\.user|req\.auth\b|jwt\.verify|jwtVerify|getServerSession|auth\(\)|currentUser\(|getAuth\(|auth\.getUser|getSession\(|verifyIdToken|getToken\(/m;
 const SIGNATURE_CHECK = /hmac|signature|verify_?webhook|construct_?event|x-hub-signature|compare_digest|svix|webhooks?\.verify|jwt\.decode|oidc|id_token|authenticated|verify_\w*(token|request|push)/i;
@@ -198,7 +201,29 @@ function pyRoutes(src, f, out) {
   }
   for (const m of src.matchAll(/^\s*(\w+)\s*=\s*(?:\w+\.)?APIRouter\(([^)]*(?:\([^)]*\)[^)]*)*)\)/gm)) {
     const dep = /dependencies\s*=\s*\[[^\]]*Depends\(\s*([\w.]+)/.exec(m[2]);
-    if (dep && isGuardName(dep[1].split('.').pop())) guardedVars.set(m[1], dep[1]);
+    if (dep && isGuardDep(dep[1].split('.').pop())) guardedVars.set(m[1], dep[1]);
+  }
+  // FastAPI dependency aliases, `AdminUser = Annotated[Session, Depends(admin_user)]`, and the dependency
+  // functions behind them. They're usually imported from a shared deps.py, so build decides repo-wide
+  // which ones check the caller (see pyAliasGuards).
+  const lineAt = (i) => src.slice(0, i).split('\n').length - 1;
+  const sigAt = (idx) => lines.slice(idx, idx + 15).join('\n').split(/\)\s*(->[^:]*)?:\s*$/m)[0];
+  const depsIn = (text) => [...text.matchAll(/\b(?:Depends|Security)\(\s*([\w.]+)/g)].map((m) => m[1].split('.').pop());
+  const typesIn = (sig) => [...new Set([...sig.matchAll(/\b\w+\s*:\s*(?:[\w.]*Annotated\[\s*)?([A-Za-z_][\w.]*)/g)].map((m) => m[1].split('.').pop()))];
+  if (/\b(Depends|Security)\(/.test(src)) {
+    for (const m of src.matchAll(/^(?:type\s+)?(\w+)\s*(?::[^=\n]*)?=\s*(?:[\w.]+\.)?Annotated\[/gm)) {
+      let depth = 1, j = m.index + m[0].length;
+      while (j < src.length && depth && j - m.index < 800) { if (src[j] === '[') depth++; else if (src[j] === ']') depth--; j++; }
+      const fn = depsIn(src.slice(m.index, j))[0];
+      if (fn) out.push({ k: 'py-alias', name: m[1], fn, line: lineAt(m.index) + 1 });
+    }
+    // top-level functions that aren't routes, with the dependencies and types they take
+    for (const m of src.matchAll(/^(?:async\s+)?def\s+(\w+)\s*\(/gm)) {
+      const idx = lineAt(m.index);
+      if (idx > 0 && /^\s*@/.test(lines[idx - 1])) continue;
+      const sig = sigAt(idx), deps = depsIn(sig), types = typesIn(sig);
+      if (deps.length || types.length) out.push({ k: 'py-dep-fn', name: m[1], ...(deps.length ? { deps } : {}), ...(types.length ? { types } : {}) });
+    }
   }
   // Decorators defined here: auth-named ones, and project wrappers like `@endpoint(write=True)` whose
   // body applies an auth decorator itself. Repeat once so a wrapper of a wrapper counts too.
@@ -235,7 +260,7 @@ function pyRoutes(src, f, out) {
     const deps = [...(decoText + '\n' + sig).matchAll(dep)].map((m) => (m[1] || m[2]).split('.').pop());
     if (deco) Object.assign(rec, { guard: deco, via: 'decorator' });
     else if (guardedVars.has(r.var)) Object.assign(rec, { guard: guardedVars.get(r.var), via: 'blueprint' });
-    else if (deps.some(isGuardName)) Object.assign(rec, { guard: deps.find(isGuardName), via: 'dependency' });
+    else if (deps.some(isGuardDep)) Object.assign(rec, { guard: deps.find(isGuardDep), via: 'dependency' });
     else if (INLINE_CHECK.test(body)) Object.assign(rec, { via: 'inline' });
     else {
       const misplaced = above.find((d) => isGuardName(d) && !/^(route|get|post|put|patch|delete)$/.test(d));
@@ -243,6 +268,9 @@ function pyRoutes(src, f, out) {
       // other decorators may be auth wrappers defined in another file; build resolves them
       const other = below.filter((d) => !/^(route|get|post|put|patch|delete|api_route|websocket)$/.test(d));
       if (other.length) rec.decos = other;
+      // so may parameter types: `user: AdminUser`, a dependency alias (pyAliasGuards)
+      const types = typesIn(sig);
+      if (types.length) rec.types = types;
     }
     if (SIGNATURE_CHECK.test(body)) rec.signed = true;
     if (defIdx > 0) rec.fn = /def\s+(\w+)/.exec(lines[defIdx])[1];
@@ -289,6 +317,33 @@ function jsRoutes(src, f, out) {
     if (SIGNATURE_CHECK.test(body)) rec.signed = true;
     out.push(rec);
   });
+}
+
+/**
+ * FastAPI dependency aliases that check the caller, per repo: Map(repo -> Map(alias -> file)).
+ * An alias checks the caller when its dependency function does: by its name (admin_user), by taking a
+ * checking dependency (Depends(require_login)), or by taking a checking alias itself, e.g.
+ * `AdminOffice = Annotated[Office, Depends(admin_owned_office)]` where admin_owned_office takes `admin: AdminUser`.
+ */
+function pyAliasGuards(files, findings) {
+  const byRepo = new Map(); // repo -> { aliases: Map(name -> {fn, file}), fns: Map(name -> {deps, types}) }
+  for (const f of files) for (const x of findings(f.path)) {
+    if (x.k !== 'py-alias' && x.k !== 'py-dep-fn') continue;
+    const k = f.repo ?? '';
+    if (!byRepo.has(k)) byRepo.set(k, { aliases: new Map(), fns: new Map() });
+    const r = byRepo.get(k);
+    if (x.k === 'py-alias') r.aliases.set(x.name, { fn: x.fn, file: f.path });
+    else r.fns.set(x.name, { deps: x.deps || [], types: x.types || [] });
+  }
+  const out = new Map();
+  for (const [repo, { aliases, fns }] of byRepo) {
+    const ok = new Map();
+    const checks = (fn) => isGuardDep(fn) || (!DB_DEPENDENCY.test(fn) && !!fns.get(fn) && (fns.get(fn).deps.some(isGuardDep) || fns.get(fn).types.some((t) => ok.has(t))));
+    // a few passes, so aliases built on other aliases resolve in any file order
+    for (let pass = 0; pass < 3; pass++) for (const [name, a] of aliases) if (!ok.has(name) && checks(a.fn)) ok.set(name, a.file);
+    if (ok.size) out.set(repo, ok);
+  }
+  return out;
 }
 
 // ---------- per-file entry point ----------
@@ -459,6 +514,11 @@ export function buildHealth({ graph, scan, arch, root }) {
     if (x.k === 'global-guard' && !TEST_FILE.test(f.path) && !/(^|\/)(scripts?|tools|bin|examples?)\//.test(f.path) && !(fileByPath.has(f.path) && kinds(fileByPath.get(f.path).n).some((k) => NOT_USED_KINDS.has(k)))) { const k = f.repo ?? ''; if (!globalGuards.has(k)) globalGuards.set(k, []); globalGuards.get(k).push({ ...x, file: f.path }); }
     if (x.k === 'guard-def' && !TEST_FILE.test(f.path)) { if (!guardDefs.has(x.name)) guardDefs.set(x.name, []); guardDefs.get(x.name).push({ file: f.path, wrapper: !!x.wrapper }); }
   }
+  const aliasGuards = pyAliasGuards(scan.files.filter((f) => !TEST_FILE.test(f.path)), findings);
+  for (const [repo, aliases] of aliasGuards) for (const [name, file] of aliases) {
+    if (!guardDefs.has(name)) guardDefs.set(name, []);
+    guardDefs.get(name).push({ file, alias: true, repo });
+  }
   // a sign-in check applied where the route's router is mounted: app.use('/admin', requireStaff, adminRouter)
   const mountGuard = new Map((scan.routes || []).filter((r) => r.mountMw?.some(isGuardName)).map((r) => [`${r.file}|${r.line}|${r.method}`, r.mountMw.find(isGuardName)]));
   const perRepo = new Map(); // repo -> { guarded, open: [], guardCounts }
@@ -475,9 +535,11 @@ export function buildHealth({ graph, scan, arch, root }) {
     // an unrecognised decorator that turns out to be an auth wrapper defined elsewhere in the project
     const viaWrapper = !fnd.via && fnd.decos?.find((d) => guardDefs.get(d)?.some((g) => (g.file.split('/')[0] === r.f.split('/')[0])));
     const mounted = !fnd.via && mountGuard.get(`${r.f}|${r.l}|${r.m}`);
-    if (fnd.via || global || viaWrapper || mounted) {
+    // a parameter typed with a dependency alias that checks the caller: `user: AdminUser`
+    const viaAlias = !fnd.via && fnd.types?.find((t) => aliasGuards.get(repo)?.has(t));
+    if (fnd.via || global || viaWrapper || mounted || viaAlias) {
       pr.guarded++; pr.guardedIn.set(r.f, (pr.guardedIn.get(r.f) || 0) + 1);
-      const name = fnd.guard || viaWrapper || mounted;
+      const name = fnd.guard || viaWrapper || mounted || viaAlias;
       if (name) {
         pr.guardCounts.set(name, (pr.guardCounts.get(name) || 0) + 1);
         if (!pr.fileGuards.has(r.f)) pr.fileGuards.set(r.f, new Map());
@@ -503,7 +565,8 @@ export function buildHealth({ graph, scan, arch, root }) {
       if (!name) return `the project's existing login check (find how other protected endpoints verify the user; if there is none, ask me before adding one)`;
       const defs = guardDefs.get(name) || [];
       const where = defs.find((g) => g.file === file) ? 'defined in this file' : defs.length ? `defined in ${defs[0].file}` : '';
-      return `the same check ${local ? 'the other endpoints in this file' : 'the protected endpoints'} already use (${lang === 'python' ? '@' : ''}${name}${where ? ', ' + where : ''})`;
+      const how = defs.some((g) => g.alias) ? `a parameter typed ${name}` : `${lang === 'python' ? '@' : ''}${name}`;
+      return `the same check ${local ? 'the other endpoints in this file' : 'the protected endpoints'} already use (${how}${where ? ', ' + where : ''})`;
     };
     const routeLine = (e) => `- ${e.r.m} ${e.r.p} — ${e.r.f}:${e.r.l}${e.fnd.fn && !/^[A-Z]+$/.test(e.fnd.fn) ? ` (${e.fnd.fn})` : ''}`;
     if (pr.misplaced.length) {
