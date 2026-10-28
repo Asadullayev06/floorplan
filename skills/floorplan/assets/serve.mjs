@@ -290,8 +290,10 @@ const server = http.createServer((req, res) => {
     res.writeHead(404); return res.end();
   }
   if (url.pathname === '/' || url.pathname === '/index.html') { res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store' }); return res.end(page); }
-  const file = path.join(here, decodeURIComponent(url.pathname));
-  if (!file.startsWith(here) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end('not found'); }
+  let file;
+  try { file = path.join(here, decodeURIComponent(url.pathname)); } catch { res.writeHead(400); return res.end('bad address'); }
+  // inside this folder only: a neighbour like ../floorplan-old/ also starts with this folder's path
+  if (!file.startsWith(here + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end('not found'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
   fs.createReadStream(file).pipe(res);
 });

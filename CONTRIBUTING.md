@@ -31,7 +31,7 @@ Open an issue describing what you were trying to do and what got in the way. Plu
 5. If you changed behaviour people will notice, add a line to `CHANGELOG.md` under an "Unreleased" heading at the top.
 6. Before opening the PR, run:
    ```bash
-   node --test "tests/**/*.test.mjs"
+   npm test
    claude plugin validate .
    ```
 
