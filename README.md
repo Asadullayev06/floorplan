@@ -13,7 +13,7 @@ Claude reads your codebase and draws an interactive map of it. Every part, file 
 
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=flat-square)](https://code.claude.com/docs/en/overview)
 [![Tests](https://img.shields.io/github/actions/workflow/status/haydenschmitty/floorplan/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/haydenschmitty/floorplan/actions/workflows/test.yml)
-[![Version](https://img.shields.io/badge/version-0.1.4-111?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.5-111?style=flat-square)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-111?style=flat-square)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-%E2%89%A518-111?style=flat-square)](https://nodejs.org)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-111?style=flat-square)](#how-it-works)
